@@ -414,6 +414,18 @@ public class KyoshinEewViewerConfiguration : ReactiveObject
 			get => _oAuthClientId;
 			set => this.RaiseAndSetIfChanged(ref _oAuthClientId, value);
 		}
+		private bool isDistributor = false;
+		public bool IsDistributor
+		{
+			get => isDistributor;
+			set => this.RaiseAndSetIfChanged(ref isDistributor, value);
+		}
+		private string _apiHost = "api.dmdata.jp";
+		public string APIHost
+		{
+			get => _apiHost;
+			set => this.RaiseAndSetIfChanged(ref _apiHost, value);
+		}
 		private string? _oAuthClientSecret;
 		public string? OAuthClientSecret
 		{

@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -94,12 +95,12 @@ public class DmdataTelegramPublisher : TelegramPublisher
 		},
 	};
 
-	private DmdataApiClientBuilder ClientBuilder { get; } = DmdataApiClientBuilder.Default
+	private DmdataDistributorApiClientBuilder ClientBuilder { get; } = DmdataDistributorApiClientBuilder.Default
 			.Referrer(new Uri("https://www.ingen084.net/"))
 			.UserAgent($"KEVi_{Utils.Version};@ingen084");
 	private OAuthCredential? Credential { get; set; }
-	private DmdataV2ApiClient? ApiClient { get; set; }
-	private DmdataV2Socket? Socket { get; set; }
+	private DmdataDistributorV2ApiClient? ApiClient { get; set; }
+	private DmdataDistributorV2Socket? Socket { get; set; }
 	private string? CursorToken { get; set; }
 
 	/// <summary>
@@ -167,6 +168,10 @@ public class DmdataTelegramPublisher : TelegramPublisher
 			ClientBuilder.UseOAuth(Credential);
 			ApiClient = ClientBuilder.BuildV2ApiClient();
 		}
+		else if (ConfigurationService.Current.Dmdata.IsDistributor)
+		{
+			this.AuthorizeByDistributor();
+		}
 		else
 			return Task.CompletedTask;
 
@@ -194,15 +199,35 @@ public class DmdataTelegramPublisher : TelegramPublisher
 		// 更新通知を流しプロバイダを切り替えてもらう
 		OnInformationCategoryUpdated();
 	}
+
+	public void AuthorizeByDistributor()
+	{
+		ConfigurationService.Current.Dmdata.IsDistributor = true;
+		var httpClient = new HttpClient(new HttpClientHandler()
+		{
+#if NET472 || NETSTANDARD2_0
+			AutomaticDecompression = System.Net.DecompressionMethods.GZip | System.Net.DecompressionMethods.Deflate
+#else
+			AutomaticDecompression = System.Net.DecompressionMethods.All
+#endif
+		});
+		ApiClient = new DmdataDistributorV2ApiClient(httpClient, new DmdataSharp.Authentication.NoneAuthenticator(), ConfigurationService.Current.Dmdata.APIHost);
+		// 更新通知を流しプロバイダを切り替えてもらう
+		OnInformationCategoryUpdated();
+	}
+
 	public Task UnauthorizeAsync()
 		=> FailAsync();
 
 	public async override Task<InformationCategory[]> GetSupportedCategoriesAsync()
 	{
-		if (Credential == null)
+		if (Credential == null && !ConfigurationService.Current.Dmdata.IsDistributor)
 			return Array.Empty<InformationCategory>();
 		if (ApiClient == null)
 			throw new InvalidOperationException("ApiClientが初期化されていません");
+
+		if (ConfigurationService.Current.Dmdata.IsDistributor)
+			return new InformationCategory[] { InformationCategory.Earthquake, InformationCategory.Tsunami, InformationCategory.EewForecast, InformationCategory.EewWarning };
 
 		try
 		{
@@ -253,7 +278,7 @@ public class DmdataTelegramPublisher : TelegramPublisher
 		{
 			await SwitchInformationAsync(true);
 
-			Socket = new DmdataV2Socket(ApiClient);
+			Socket = new DmdataDistributorV2Socket(ApiClient);
 			Socket.Connected += (s, e) =>
 			{
 				Logger.LogInformation("WebSocket Connected id: {SocketId}", e?.SocketId);

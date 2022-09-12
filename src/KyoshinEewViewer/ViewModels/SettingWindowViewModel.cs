@@ -141,10 +141,16 @@ public class SettingWindowViewModel : ViewModelBase
 		= SoundPlayerService.RegisteredSounds.Select(s => new SoundConfigViewModel(s.Key, s.Value)).ToArray();
 
 	private string _dmdataStatusString = "未実装です";
+	private string _dmdataStatusStringDistributor = "未実装です";
 	public string DmdataStatusString
 	{
 		get => _dmdataStatusString;
 		set => this.RaiseAndSetIfChanged(ref _dmdataStatusString, value);
+	}
+	public string DmdataStatusStringDistributor
+	{
+		get => _dmdataStatusStringDistributor;
+		set => this.RaiseAndSetIfChanged(ref _dmdataStatusStringDistributor, value);
 	}
 	private string _authorizeButtonText = "認証";
 	public string AuthorizeButtonText
@@ -199,8 +205,22 @@ public class SettingWindowViewModel : ViewModelBase
 		AuthorizeButtonEnabled = true;
 	}
 
+	public async Task AuthorizeDmdataByDistributor()
+	{
+		if (DmdataTelegramPublisher.Instance is null)
+			return;
+		DmdataStatusStringDistributor = "プロキシを使用中";
+		DmdataTelegramPublisher.Instance.AuthorizeByDistributor();
+	}
+
 	public async Task UnauthorizeDmdata()
 	{
+		if (Config.Dmdata.IsDistributor)
+		{
+			Config.Dmdata.IsDistributor = false;
+			Config.Dmdata.APIHost = "api.dmdata.jp";
+		}
+
 		if (string.IsNullOrEmpty(Config.Dmdata.RefreshToken))
 			return;
 
@@ -229,6 +249,14 @@ public class SettingWindowViewModel : ViewModelBase
 		{
 			DmdataStatusString = "認証済み";
 			AuthorizeButtonText = "連携解除";
+		}
+		if (Config.Dmdata.IsDistributor)
+		{
+			DmdataStatusStringDistributor = "プロキシを使用中";
+		}
+		else
+		{
+			DmdataStatusStringDistributor = "無効";
 		}
 	}
 

@@ -162,6 +162,43 @@
 				</Button>
 			</StackPanel>
 		</HeaderedContentControl>
+		
+		<StackPanel>
+			<TextBlock Text="OR" FontSize="16" HorizontalAlignment="Center" />
+		</StackPanel>
+
+
+		<HeaderedContentControl MaxWidth="500">
+			<StackPanel>
+				<TextBlock Text="プロキシを使用" />
+				<StackPanel Orientation="Horizontal" Margin="0,5">
+					<TextBlock Text="接続状況: " />
+					<TextBlock Text="{Binding DmdataStatusStringDistributor}" FontWeight="Bold" />
+				</StackPanel>
+					<TextBox Text="{Binding Config.Dmdata.APIHost}" HorizontalAlignment="Left"
+						 Margin="0,1.5" Width="200" />
+					<Button Classes="accent" Content="接続" Command="{Binding AuthorizeDmdataByDistributor}" HorizontalAlignment="Center"
+							IsVisible="{Binding !Config.Dmdata.IsDistributor}"
+							IsEnabled="{Binding AuthorizeCancellationTokenSource, Converter={x:Static ObjectConverters.IsNull}}}" />
+					<Button Content="アカウント連携解除" Command="{Binding UnauthorizeDmdata}" HorizontalAlignment="Center"
+							IsVisible="{Binding Config.Dmdata.IsDistributor}">
+						<Button.Styles>
+							<Style>
+								<Style.Resources>
+									<SolidColorBrush x:Key="ThemeBorderMidBrush">Red</SolidColorBrush>
+									<SolidColorBrush x:Key="ThemeControlHighBrush">DarkRed</SolidColorBrush>
+									<SolidColorBrush x:Key="ButtonBackground">DarkRed</SolidColorBrush>
+									<SolidColorBrush x:Key="ButtonBackgroundPointerOver">Red</SolidColorBrush>
+									<SolidColorBrush x:Key="ButtonBackgroundPressed">OrangeRed</SolidColorBrush>
+									<SolidColorBrush x:Key="ButtonForeground">White</SolidColorBrush>
+									<SolidColorBrush x:Key="ButtonForegroundPointerOver">White</SolidColorBrush>
+									<SolidColorBrush x:Key="ButtonForegroundPressed">White</SolidColorBrush>
+								</Style.Resources>
+							</Style>
+						</Button.Styles>
+					</Button>
+			</StackPanel>
+		</HeaderedContentControl>
 
 		<StackPanel Margin="5">
 			<CheckBox Content="WebSocketで受信を行う" IsChecked="{Binding Config.Dmdata.UseWebSocket}" Margin="0,4" />
